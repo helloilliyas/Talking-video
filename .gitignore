@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Android / Gradle
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.apk
+*.aab
+
+# Model weights / media scratch (never commit)
+backend/preloaded_voices/
+*.pth
+*.ckpt
+*.safetensors
+
+# OS
+.DS_Store

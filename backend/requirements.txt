@@ -1,0 +1,5 @@
+# Local tooling only — heavy model deps are baked into Modal images
+# (see talking_avatar/common.py).
+modal>=1.0
+fastapi>=0.115
+pydantic>=2.7
