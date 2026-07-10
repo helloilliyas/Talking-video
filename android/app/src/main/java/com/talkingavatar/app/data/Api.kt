@@ -68,8 +68,11 @@ interface TalkingAvatarApi {
         @Part("emotion") emotion: RequestBody,
         @Part("mode") mode: RequestBody,
         @Part("aspect_ratio") aspectRatio: RequestBody,
+        @Part("captions") captions: RequestBody,
+        @Part("upscale") upscale: RequestBody,
         @Part("consent") consent: RequestBody,
         @Part audio: MultipartBody.Part?,
+        @Part background: MultipartBody.Part?,
     ): CreateJobResponse
 
     @GET("v1/jobs/{jobId}")

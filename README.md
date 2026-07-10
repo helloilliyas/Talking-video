@@ -13,7 +13,11 @@ FastAPI on Modal
         ├── CosyVoice ───────── speech synthesis / zero-shot voice cloning
         ├── FLOAT ───────────── talking portrait from one photo + audio
         ├── MuseTalk 1.5 ────── lip-sync refinement (fast mode)
-        ├── GFPGAN ──────────── face restoration (high-quality mode)
+        ├── LatentSync 1.6 ──── premium diffusion lip-sync (HQ mode)
+        ├── GFPGAN ──────────── face restoration (HQ mode)
+        ├── Real-ESRGAN ─────── optional 1080p upscaling
+        ├── RVM ─────────────── optional background replacement
+        ├── faster-whisper ──── optional burned-in captions
         └── FFmpeg ──────────── aspect ratio, mux, H.264 MP4
         │
         ▼
@@ -27,13 +31,17 @@ MP4 → previewed in app → saved to Samsung Gallery (Movies/TalkingAvatar)
 | `backend/` | FastAPI + Modal GPU pipeline ([backend/README.md](backend/README.md)) |
 | `android/` | Kotlin + Jetpack Compose app ([android/README.md](android/README.md)) |
 
-## Phase 1 features (this repo)
+## Features (Phases 1 + 2, this repo)
 
 - Upload a reference photo
 - Type a script **or** upload your own audio
 - Preloaded voices, voice cloning from a 10–30 s sample (record or upload)
 - Language, speed, and emotion controls
-- Fast mode (FLOAT → MuseTalk) and High-Quality mode (+ GFPGAN restoration)
+- Fast mode (FLOAT → MuseTalk 1.5) and High-Quality mode
+  (FLOAT → LatentSync 1.6 → GFPGAN restoration)
+- Optional Real-ESRGAN 1080p upscaling
+- Optional background replacement (pick any image; RVM video matting)
+- Optional burned-in captions (faster-whisper transcription)
 - 9:16 / 16:9 / 1:1 output
 - Progress tracking, in-app preview, save to Gallery, share sheet
 
@@ -60,9 +68,9 @@ biggest levers on output quality:
 - a clean voice sample for cloning (no music, one speaker, 10–30 s)
 - High-Quality mode for the final render; Fast mode for iteration
 
-Phase 2 (LatentSync premium lip-sync, Real-ESRGAN 1080p upscale, captions,
-background replacement) and Phase 3 (saved avatars, full-body mode,
-HunyuanVideo-Avatar) build on the same job pipeline.
+Phase 3 (saved avatars, multiple voice profiles, full-body mode,
+HunyuanVideo-Avatar ultra-quality, batch generation) builds on the same
+job pipeline.
 
 ## Ethics
 

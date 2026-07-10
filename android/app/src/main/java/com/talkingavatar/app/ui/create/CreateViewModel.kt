@@ -23,6 +23,9 @@ data class CreateUiState(
     val emotion: String = "",
     val highQuality: Boolean = false,
     val aspectRatio: String = "9:16",
+    val captions: Boolean = false,
+    val upscale: Boolean = false,
+    val backgroundUri: Uri? = null,
     val consent: Boolean = false,
     val submitting: Boolean = false,
     val error: String? = null,
@@ -61,6 +64,9 @@ class CreateViewModel(app: Application) : AndroidViewModel(app) {
     fun setEmotion(emotion: String) = _state.update { it.copy(emotion = emotion) }
     fun setHighQuality(hq: Boolean) = _state.update { it.copy(highQuality = hq) }
     fun setAspectRatio(ratio: String) = _state.update { it.copy(aspectRatio = ratio) }
+    fun setCaptions(on: Boolean) = _state.update { it.copy(captions = on) }
+    fun setUpscale(on: Boolean) = _state.update { it.copy(upscale = on) }
+    fun setBackground(uri: Uri?) = _state.update { it.copy(backgroundUri = uri) }
     fun setConsent(ok: Boolean) = _state.update { it.copy(consent = ok) }
 
     fun submit(onJobStarted: (String) -> Unit) {
@@ -72,6 +78,7 @@ class CreateViewModel(app: Application) : AndroidViewModel(app) {
                 repository.createJob(
                     photoUri = s.photoUri!!,
                     audioUri = s.audioUri,
+                    backgroundUri = s.backgroundUri,
                     options = GenerationOptions(
                         script = s.script,
                         voiceId = s.selectedVoiceId.orEmpty(),
@@ -80,6 +87,8 @@ class CreateViewModel(app: Application) : AndroidViewModel(app) {
                         emotion = s.emotion,
                         highQuality = s.highQuality,
                         aspectRatio = s.aspectRatio,
+                        captions = s.captions,
+                        upscale = s.upscale,
                     ),
                 )
             }.onSuccess { jobId ->

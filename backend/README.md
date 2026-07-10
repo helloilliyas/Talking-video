@@ -1,8 +1,10 @@
 # Talking Avatar Backend (FastAPI on Modal)
 
 Serverless GPU pipeline: **CosyVoice** (TTS + voice cloning) → **FLOAT**
-(talking portrait) → **MuseTalk 1.5** (lip-sync refinement) → **GFPGAN**
-(face restoration, HQ mode) → **FFmpeg** (aspect ratio + MP4).
+(talking portrait) → **MuseTalk 1.5** (fast) / **LatentSync 1.6** (premium)
+lip-sync → **GFPGAN** (face restoration, HQ mode) → optional **Real-ESRGAN**
+1080p upscale, **RVM** background replacement, **faster-whisper** captions →
+**FFmpeg** (aspect ratio + MP4).
 
 ## Layout
 
@@ -16,8 +18,11 @@ backend/
     ├── pipeline.py            # orchestrator (spawned per job)
     ├── voice.py               # CosyVoice service + voice cloning
     ├── avatar.py              # FLOAT generation
-    ├── lipsync.py             # MuseTalk 1.5 refinement
-    └── enhance.py             # GFPGAN restoration + FFmpeg finalize
+    ├── lipsync.py             # MuseTalk 1.5 refinement (fast mode)
+    ├── latentsync.py          # LatentSync 1.6 refinement (HQ mode)
+    ├── background.py          # RVM matting + background composite
+    ├── captions.py            # faster-whisper -> SRT
+    └── enhance.py             # GFPGAN + Real-ESRGAN + FFmpeg finalize
 ```
 
 ## Setup
@@ -65,7 +70,7 @@ All endpoints require `Authorization: Bearer <API_TOKEN>`.
 |--------|-------------------------|-------------------------------------------------------------|---------|
 | GET    | `/v1/voices`            | —                                                           | voice list |
 | POST   | `/v1/voices/clone`      | multipart: `name`, `transcript`, `language`, `audio`, `consent=true` | `{voice_id}` |
-| POST   | `/v1/jobs`              | multipart: `photo`, `script` or `audio`, `voice_id`, `speed`, `emotion`, `mode` (`fast`/`hq`), `aspect_ratio`, `consent=true` | `{job_id}` |
+| POST   | `/v1/jobs`              | multipart: `photo`, `script` or `audio`, `voice_id`, `speed`, `emotion`, `mode` (`fast`/`hq`), `aspect_ratio`, `captions`, `upscale`, optional `background` image, `consent=true` | `{job_id}` |
 | GET    | `/v1/jobs/{id}`         | —                                                           | stage/progress/error |
 | GET    | `/v1/jobs/{id}/video`   | —                                                           | final MP4 |
 

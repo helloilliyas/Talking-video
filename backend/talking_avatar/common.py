@@ -96,7 +96,32 @@ musetalk_image = (
 )
 
 # ---------------------------------------------------------------------------
-# GFPGAN + FFmpeg — face restoration and final mux/crop.
+# LatentSync 1.6 — diffusion lip-sync, the HQ-mode premium path (Phase 2).
+# ---------------------------------------------------------------------------
+LATENTSYNC_REPO = "https://github.com/bytedance/LatentSync.git"
+
+latentsync_image = (
+    modal.Image.from_registry(CUDA_BASE, add_python="3.10")
+    .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
+    .run_commands(
+        f"git clone {LATENTSYNC_REPO} /opt/LatentSync",
+        "pip install -r /opt/LatentSync/requirements.txt",
+    )
+    .pip_install("huggingface_hub")
+    .env({"PYTHONPATH": "/opt/LatentSync"})
+)
+
+# ---------------------------------------------------------------------------
+# Captions — faster-whisper on CPU (Phase 2).
+# ---------------------------------------------------------------------------
+captions_image = (
+    modal.Image.debian_slim(python_version="3.11")
+    .apt_install("ffmpeg")
+    .pip_install("faster-whisper==1.0.3")
+)
+
+# ---------------------------------------------------------------------------
+# GFPGAN + Real-ESRGAN + RVM + FFmpeg — restoration, upscale, matting, mux.
 # ---------------------------------------------------------------------------
 enhance_image = (
     modal.Image.from_registry(CUDA_BASE, add_python="3.10")

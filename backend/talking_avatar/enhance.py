@@ -73,6 +73,66 @@ def restore_faces(job_id: str, input_rel: str) -> str:
     return f"{job_id}/enhanced.mp4"
 
 
+REALESRGAN_URL = "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.1/RealESRGAN_x2plus.pth"
+
+
+@app.function(
+    image=enhance_image,
+    gpu="T4",
+    timeout=2700,
+    volumes={JOBS_DIR: jobs_volume, WEIGHTS_DIR: weights_volume},
+)
+def upscale_video(job_id: str, input_rel: str) -> str:
+    """Real-ESRGAN x2 over every frame — takes FLOAT/MuseTalk's ~512 px output
+    to ~1080p. Writes <job>/upscaled.mp4 (video only) and returns rel path."""
+    import cv2
+    from basicsr.archs.rrdbnet_arch import RRDBNet
+    from realesrgan import RealESRGANer
+
+    ckpt = Path(WEIGHTS_DIR) / "realesrgan" / "RealESRGAN_x2plus.pth"
+    if not ckpt.exists():
+        ckpt.parent.mkdir(parents=True, exist_ok=True)
+        subprocess.run(["python", "-c", (
+            "from basicsr.utils.download_util import load_file_from_url;"
+            f"load_file_from_url('{REALESRGAN_URL}', model_dir='{ckpt.parent}')"
+        )], check=True)
+        weights_volume.commit()
+
+    upsampler = RealESRGANer(
+        scale=2,
+        model_path=str(ckpt),
+        model=RRDBNet(num_in_ch=3, num_out_ch=3, num_feat=64,
+                      num_block=23, num_grow_ch=32, scale=2),
+        tile=256,  # bounded VRAM on T4
+        half=True,
+    )
+
+    jobs_volume.reload()
+    job_dir = Path(JOBS_DIR) / job_id
+    src = Path(JOBS_DIR) / input_rel
+
+    cap = cv2.VideoCapture(str(src))
+    fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    out_path = job_dir / "upscaled.mp4"
+    writer = cv2.VideoWriter(
+        str(out_path), cv2.VideoWriter_fourcc(*"mp4v"), fps, (width * 2, height * 2)
+    )
+    while True:
+        ok, frame = cap.read()
+        if not ok:
+            break
+        upscaled, _ = upsampler.enhance(frame, outscale=2)
+        writer.write(upscaled)
+    cap.release()
+    writer.release()
+
+    jobs_volume.commit()
+    return f"{job_id}/upscaled.mp4"
+
+
 # Aspect-ratio pad expressions: fit the source inside the target canvas and
 # pad with blurred background bars (HeyGen-style) rather than stretching.
 _CANVAS = {
@@ -87,13 +147,15 @@ _CANVAS = {
     timeout=600,
     volumes={JOBS_DIR: jobs_volume},
 )
-def finalize(job_id: str, video_rel: str, aspect_ratio: str) -> str:
+def finalize(job_id: str, video_rel: str, aspect_ratio: str, burn_captions: bool = False) -> str:
     """Mux video + speech.wav, letterbox onto the target canvas with a blurred
-    self-background, encode H.264/AAC. Writes <job>/final.mp4."""
+    self-background, optionally burn <job>/captions.srt, encode H.264/AAC.
+    Writes <job>/final.mp4."""
     jobs_volume.reload()
     job_dir = Path(JOBS_DIR) / job_id
     video = Path(JOBS_DIR) / video_rel
     audio = job_dir / "speech.wav"
+    srt = job_dir / "captions.srt"
     out = job_dir / "final.mp4"
 
     w, h = _CANVAS.get(aspect_ratio, _CANVAS["9:16"])
@@ -101,8 +163,14 @@ def finalize(job_id: str, video_rel: str, aspect_ratio: str) -> str:
         f"[0:v]scale={w}:{h}:force_original_aspect_ratio=increase,"
         f"crop={w}:{h},boxblur=40:8[bg];"
         f"[0:v]scale={w}:{h}:force_original_aspect_ratio=decrease[fg];"
-        f"[bg][fg]overlay=(W-w)/2:(H-h)/2[v]"
+        f"[bg][fg]overlay=(W-w)/2:(H-h)/2[vpad]"
     )
+    if burn_captions and srt.exists():
+        style = ("FontName=Arial,FontSize=14,PrimaryColour=&H00FFFFFF,"
+                 "OutlineColour=&H80000000,BorderStyle=1,Outline=2,MarginV=40")
+        filter_complex += f";[vpad]subtitles={srt}:force_style='{style}'[v]"
+    else:
+        filter_complex += ";[vpad]null[v]"
 
     subprocess.run(
         [

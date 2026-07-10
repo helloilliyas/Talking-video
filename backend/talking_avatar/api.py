@@ -86,8 +86,11 @@ def _build_fastapi():
         emotion: str = Form(""),
         mode: OutputMode = Form(OutputMode.FAST),
         aspect_ratio: AspectRatio = Form(AspectRatio.PORTRAIT),
+        captions: bool = Form(False),
+        upscale: bool = Form(False),
         consent: bool = Form(False),
         audio: UploadFile = None,
+        background: UploadFile = None,
     ):
         require_consent(consent)
         if not script and audio is None:
@@ -109,6 +112,11 @@ def _build_fastapi():
                 raise HTTPException(status_code=413, detail="audio too large")
             # Raw upload (any format); the pipeline converts it to WAV.
             (job_dir / "speech_upload").write_bytes(audio_bytes)
+        if background is not None:
+            bg_bytes = await background.read()
+            if len(bg_bytes) > MAX_PHOTO_BYTES:
+                raise HTTPException(status_code=413, detail="background too large")
+            (job_dir / "background.png").write_bytes(bg_bytes)
         jobs_volume.commit()
 
         job_store[job_id] = {
@@ -125,6 +133,8 @@ def _build_fastapi():
                 "emotion": emotion or None,
                 "mode": mode.value,
                 "aspect_ratio": aspect_ratio.value,
+                "captions": captions,
+                "upscale": upscale,
             },
         }
 

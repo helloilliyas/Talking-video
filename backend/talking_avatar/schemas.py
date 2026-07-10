@@ -7,8 +7,7 @@ from pydantic import BaseModel, Field
 
 class OutputMode(str, Enum):
     FAST = "fast"          # FLOAT -> MuseTalk 1.5
-    HIGH_QUALITY = "hq"    # Phase 1: fast pipeline + GFPGAN restoration.
-                           # Phase 2 swaps MuseTalk for LatentSync here.
+    HIGH_QUALITY = "hq"    # FLOAT -> LatentSync 1.6 -> GFPGAN restoration
 
 
 class AspectRatio(str, Enum):
@@ -21,8 +20,11 @@ class JobStage(str, Enum):
     QUEUED = "queued"
     VOICE = "voice"            # TTS / audio prep
     AVATAR = "avatar"          # FLOAT generation
-    LIPSYNC = "lipsync"        # MuseTalk refinement
+    LIPSYNC = "lipsync"        # MuseTalk (fast) / LatentSync (hq)
     ENHANCE = "enhance"        # GFPGAN face restoration
+    BACKGROUND = "background"  # RVM matting + composite
+    UPSCALE = "upscale"        # Real-ESRGAN to 1080p
+    CAPTIONS = "captions"      # faster-whisper -> SRT
     FINALIZE = "finalize"      # mux + aspect ratio + compression
     COMPLETED = "completed"
     FAILED = "failed"

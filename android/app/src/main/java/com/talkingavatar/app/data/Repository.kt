@@ -20,6 +20,8 @@ class GenerationOptions(
     val emotion: String,
     val highQuality: Boolean,
     val aspectRatio: String,
+    val captions: Boolean = false,
+    val upscale: Boolean = false,
 )
 
 /** Single entry point the ViewModels use to talk to the backend. */
@@ -50,7 +52,12 @@ class Repository(private val context: Context) {
         ).voiceId
     }
 
-    suspend fun createJob(photoUri: Uri, audioUri: Uri?, options: GenerationOptions): String =
+    suspend fun createJob(
+        photoUri: Uri,
+        audioUri: Uri?,
+        backgroundUri: Uri?,
+        options: GenerationOptions,
+    ): String =
         withContext(Dispatchers.IO) {
             val photoFile = copyToCache(photoUri, "photo")
             val photoPart = MultipartBody.Part.createFormData(
@@ -62,6 +69,12 @@ class Repository(private val context: Context) {
                     "audio", "speech", audioFile.asRequestBody("audio/*".toMediaType())
                 )
             }
+            val backgroundPart = backgroundUri?.let {
+                val bgFile = copyToCache(it, "background")
+                MultipartBody.Part.createFormData(
+                    "background", "background.png", bgFile.asRequestBody("image/*".toMediaType())
+                )
+            }
             api().createJob(
                 photo = photoPart,
                 script = options.script.asForm(),
@@ -71,8 +84,11 @@ class Repository(private val context: Context) {
                 emotion = options.emotion.asForm(),
                 mode = (if (options.highQuality) "hq" else "fast").asForm(),
                 aspectRatio = options.aspectRatio.asForm(),
+                captions = options.captions.toString().asForm(),
+                upscale = options.upscale.toString().asForm(),
                 consent = "true".asForm(),
                 audio = audioPart,
+                background = backgroundPart,
             ).jobId
         }
 

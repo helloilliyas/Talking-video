@@ -28,6 +28,7 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -59,6 +60,9 @@ fun CreateScreen(
     val audioPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()
     ) { viewModel.setAudio(it) }
+    val backgroundPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia()
+    ) { viewModel.setBackground(it) }
 
     Column(
         modifier = Modifier
@@ -176,6 +180,37 @@ fun CreateScreen(
                     onClick = { viewModel.setAspectRatio(ratio) },
                     shape = SegmentedButtonDefaults.itemShape(index = index, count = ratios.size),
                 ) { Text(ratio) }
+            }
+        }
+
+        // --- Extras (Phase 2) -----------------------------------------------------
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Burn-in captions", style = MaterialTheme.typography.bodyLarge)
+            Switch(checked = state.captions, onCheckedChange = viewModel::setCaptions)
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("Upscale to 1080p", style = MaterialTheme.typography.bodyLarge)
+            Switch(checked = state.upscale, onCheckedChange = viewModel::setUpscale)
+        }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedButton(onClick = {
+                backgroundPicker.launch(
+                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                )
+            }) {
+                Text(if (state.backgroundUri == null) "Replace background…" else "Background set ✓")
+            }
+            if (state.backgroundUri != null) {
+                Spacer(Modifier.size(8.dp))
+                AssistChip(onClick = { viewModel.setBackground(null) }, label = { Text("Clear") })
             }
         }
 

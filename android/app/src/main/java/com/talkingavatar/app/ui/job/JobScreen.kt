@@ -36,6 +36,9 @@ private val STAGE_LABELS = mapOf(
     "avatar" to "Animating your photo",
     "lipsync" to "Refining lip-sync",
     "enhance" to "Restoring facial detail",
+    "background" to "Replacing background",
+    "upscale" to "Upscaling to 1080p",
+    "captions" to "Generating captions",
     "finalize" to "Encoding MP4",
 )
 

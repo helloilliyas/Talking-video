@@ -4,7 +4,17 @@ Importing the stage modules registers every function/class on the shared app.
 """
 
 from talking_avatar.common import app  # noqa: F401
-from talking_avatar import api, avatar, enhance, lipsync, pipeline, voice  # noqa: F401
+from talking_avatar import (  # noqa: F401
+    api,
+    avatar,
+    background,
+    captions,
+    enhance,
+    latentsync,
+    lipsync,
+    pipeline,
+    voice,
+)
 
 
 @app.local_entrypoint()
