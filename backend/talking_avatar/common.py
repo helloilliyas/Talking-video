@@ -34,6 +34,16 @@ api_secret = modal.Secret.from_name("talking-avatar-api")
 
 CUDA_BASE = "nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04"
 
+# The model repos ship legacy setup.py packages whose builds import
+# pkg_resources, removed in setuptools 81. PIP_CONSTRAINT applies inside
+# pip's isolated build environments too, keeping those builds on a
+# setuptools that still bundles it.
+PIP_COMPAT_ENV = {"PIP_CONSTRAINT": "/etc/pip-constraints.txt"}
+PIP_COMPAT_CMDS = (
+    "printf 'setuptools<81\\nwheel\\n' > /etc/pip-constraints.txt",
+    "pip install --no-cache-dir 'setuptools<81' wheel",
+)
+
 # ---------------------------------------------------------------------------
 # API image — lightweight, CPU only.
 # ---------------------------------------------------------------------------
@@ -55,7 +65,9 @@ COSYVOICE_MODEL_ID = "iic/CosyVoice2-0.5B"
 cosyvoice_image = (
     modal.Image.from_registry(CUDA_BASE, add_python="3.10")
     .apt_install("git", "git-lfs", "ffmpeg", "sox", "libsox-dev", "build-essential")
+    .env(PIP_COMPAT_ENV)
     .run_commands(
+        *PIP_COMPAT_CMDS,
         f"git clone --recursive {COSYVOICE_REPO} /opt/CosyVoice",
         "pip install -r /opt/CosyVoice/requirements.txt",
     )
@@ -71,7 +83,9 @@ FLOAT_REPO = "https://github.com/deepbrainai-research/float.git"
 float_image = (
     modal.Image.from_registry(CUDA_BASE, add_python="3.10")
     .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
+    .env(PIP_COMPAT_ENV)
     .run_commands(
+        *PIP_COMPAT_CMDS,
         f"git clone {FLOAT_REPO} /opt/float",
         "pip install -r /opt/float/requirements.txt",
     )
@@ -87,7 +101,9 @@ MUSETALK_REPO = "https://github.com/TMElyralab/MuseTalk.git"
 musetalk_image = (
     modal.Image.from_registry(CUDA_BASE, add_python="3.10")
     .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
+    .env(PIP_COMPAT_ENV)
     .run_commands(
+        *PIP_COMPAT_CMDS,
         f"git clone {MUSETALK_REPO} /opt/MuseTalk",
         "pip install -r /opt/MuseTalk/requirements.txt",
         "pip install --no-cache-dir openmim && mim install mmengine 'mmcv==2.0.1' 'mmdet==3.1.0' 'mmpose==1.1.0'",
@@ -103,7 +119,9 @@ LATENTSYNC_REPO = "https://github.com/bytedance/LatentSync.git"
 latentsync_image = (
     modal.Image.from_registry(CUDA_BASE, add_python="3.10")
     .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
+    .env(PIP_COMPAT_ENV)
     .run_commands(
+        *PIP_COMPAT_CMDS,
         f"git clone {LATENTSYNC_REPO} /opt/LatentSync",
         "pip install -r /opt/LatentSync/requirements.txt",
     )
