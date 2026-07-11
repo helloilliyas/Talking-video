@@ -24,8 +24,8 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install Modal
-        run: pip install modal
+      - name: Install deploy dependencies
+        run: pip install -r backend/requirements.txt
 
       - name: Guard secrets
         run: |
