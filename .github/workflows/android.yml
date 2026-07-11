@@ -7,6 +7,9 @@ on:
       - ".github/workflows/android.yml"
   workflow_dispatch:
 
+permissions:
+  contents: write  # lets the workflow refresh the debug-latest release
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,9 +29,24 @@ jobs:
         run: gradle :app:assembleDebug
         working-directory: android
 
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk TalkingAvatar-debug.apk
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: talking-avatar-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: TalkingAvatar-debug.apk
           if-no-files-found: error
+
+      # Public, login-free download link on the Releases page.
+      - name: Publish debug-latest release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: debug-latest
+          name: "Talking Avatar — latest debug build"
+          prerelease: true
+          body: |
+            Auto-built debug APK from the latest push (${{ github.sha }}).
+            Install on Android 8.0+ (allow "install unknown apps" for your browser).
+          files: TalkingAvatar-debug.apk
