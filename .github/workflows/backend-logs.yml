@@ -1,0 +1,22 @@
+name: Backend Logs (debug)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  logs:
+    runs-on: ubuntu-latest
+    env:
+      MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+      MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install modal
+      - name: Capture recent app logs
+        run: |
+          timeout 90 modal app logs talking-avatar > logs.txt 2>&1 || true
+          echo "== lines: $(wc -l < logs.txt) =="
+          # Only surface error context, not full stdout (public repo).
+          grep -n -B3 -A40 -iE 'traceback|error|exception|oom|killed' logs.txt | tail -400 || echo "no error lines found"
