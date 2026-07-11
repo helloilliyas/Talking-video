@@ -1,0 +1,48 @@
+name: Deploy Backend to Modal
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/talking-avatar-phase-1-s682v3, main]
+    paths:
+      - "backend/**"
+      - ".github/workflows/deploy-backend.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Requires three repository Actions secrets:
+    #   MODAL_TOKEN_ID / MODAL_TOKEN_SECRET  — from `modal token new` / dashboard
+    #   TALKING_AVATAR_API_TOKEN             — bearer token the Android app sends
+    env:
+      MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+      MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Modal
+        run: pip install modal
+
+      - name: Guard secrets
+        run: |
+          if [ -z "$MODAL_TOKEN_ID" ] || [ -z "$MODAL_TOKEN_SECRET" ]; then
+            echo "::error::Set MODAL_TOKEN_ID and MODAL_TOKEN_SECRET repository secrets first."
+            exit 1
+          fi
+          if [ -z "${{ secrets.TALKING_AVATAR_API_TOKEN }}" ]; then
+            echo "::error::Set the TALKING_AVATAR_API_TOKEN repository secret first."
+            exit 1
+          fi
+
+      - name: Create/refresh API auth secret on Modal
+        run: |
+          modal secret create talking-avatar-api \
+            API_TOKEN='${{ secrets.TALKING_AVATAR_API_TOKEN }}' --force
+
+      - name: Deploy
+        working-directory: backend
+        run: modal deploy deploy.py
