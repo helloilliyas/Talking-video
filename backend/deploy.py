@@ -18,6 +18,15 @@ from talking_avatar import (  # noqa: F401
 
 
 @app.local_entrypoint()
+def seed_demo():
+    """Register the built-in demo voice (idempotent)."""
+    from talking_avatar.voice import seed_demo_voice
+
+    seed_demo_voice.remote()
+    print("demo voice ready")
+
+
+@app.local_entrypoint()
 def seed_preloaded_voices():
     """One-time helper: upload preloaded-voice reference clips.
 

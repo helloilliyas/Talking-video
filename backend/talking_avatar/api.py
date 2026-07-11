@@ -48,16 +48,17 @@ def _build_fastapi():
 
     @web.get("/v1/voices", dependencies=[Depends(check_auth)])
     def list_voices() -> list[VoiceInfo]:
-        voices = [
-            VoiceInfo(voice_id=vid, name=meta["name"], kind="preloaded",
-                      language=meta["language"])
-            for vid, meta in PRELOADED_VOICES.items()
+        # Only voices that actually have reference audio registered —
+        # advertising unseeded ids gives "unknown voice_id" at generation time.
+        return [
+            VoiceInfo(
+                voice_id=vid,
+                name=meta["name"],
+                kind=meta.get("kind", "cloned"),
+                language=meta.get("language", "auto"),
+            )
+            for vid, meta in voice_registry.items()
         ]
-        for vid, meta in voice_registry.items():
-            if meta.get("kind") == "cloned":
-                voices.append(VoiceInfo(voice_id=vid, name=meta["name"],
-                                        kind="cloned", language=meta.get("language", "auto")))
-        return voices
 
     @web.post("/v1/voices/clone", dependencies=[Depends(check_auth)])
     async def clone_voice(

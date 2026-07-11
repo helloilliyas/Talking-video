@@ -46,3 +46,7 @@ jobs:
       - name: Deploy
         working-directory: backend
         run: modal deploy deploy.py
+
+      - name: Seed demo voice
+        working-directory: backend
+        run: modal run deploy.py::seed_demo

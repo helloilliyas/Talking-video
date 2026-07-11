@@ -32,6 +32,45 @@ PRELOADED_VOICES = {
     "en_male_narrator": {"name": "Marcus (narrator male)", "language": "en"},
 }
 
+# Auto-seeded from the sample clip that ships in the CosyVoice repo
+# (Apache-2.0), so the app has one working voice before any cloning.
+DEMO_VOICE_ID = "demo_voice"
+DEMO_SAMPLE_PATH = "/opt/CosyVoice/asset/zero_shot_prompt.wav"
+
+
+def _seed_demo_voice_impl():
+    """Register the repo's sample prompt clip as a usable default voice."""
+    import subprocess
+
+    if voice_registry.get(DEMO_VOICE_ID) is not None:
+        return
+    rel_path = f"preloaded/{DEMO_VOICE_ID}"
+    ref_dir = Path(VOICES_DIR) / rel_path
+    ref_dir.mkdir(parents=True, exist_ok=True)
+    subprocess.run(
+        ["ffmpeg", "-y", "-i", DEMO_SAMPLE_PATH,
+         "-ac", "1", "-ar", "16000", str(ref_dir / "ref.wav")],
+        check=True,
+    )
+    # No transcript: synthesize() falls back to cross-lingual mode, which
+    # conditions on timbre alone and speaks any target language.
+    (ref_dir / "meta.json").write_text(
+        json.dumps({"name": "Demo voice", "transcript": "", "language": "auto"})
+    )
+    voices_volume.commit()
+    voice_registry[DEMO_VOICE_ID] = {
+        "name": "Demo voice",
+        "kind": "preloaded",
+        "language": "auto",
+        "path": rel_path,
+    }
+
+
+@app.function(image=cosyvoice_image, volumes={VOICES_DIR: voices_volume}, timeout=600)
+def seed_demo_voice():
+    """CPU one-shot, run right after deploy so the voice list is never empty."""
+    _seed_demo_voice_impl()
+
 
 @app.cls(
     image=cosyvoice_image,
@@ -61,6 +100,7 @@ class VoiceService:
             marker.touch()
             weights_volume.commit()
 
+        _seed_demo_voice_impl()
         self.model = CosyVoice2(str(model_dir), load_jit=False, load_trt=False, fp16=True)
         self.sample_rate = self.model.sample_rate
 
