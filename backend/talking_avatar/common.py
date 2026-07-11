@@ -64,7 +64,8 @@ COSYVOICE_MODEL_ID = "iic/CosyVoice2-0.5B"
 
 cosyvoice_image = (
     modal.Image.from_registry(CUDA_BASE, add_python="3.10")
-    .apt_install("git", "git-lfs", "ffmpeg", "sox", "libsox-dev", "build-essential")
+    # clang: Modal's Python toolchain compiles C extensions with clang++
+    .apt_install("git", "git-lfs", "ffmpeg", "sox", "libsox-dev", "build-essential", "clang")
     .env(PIP_COMPAT_ENV)
     .run_commands(
         *PIP_COMPAT_CMDS,
@@ -82,7 +83,7 @@ FLOAT_REPO = "https://github.com/deepbrainai-research/float.git"
 
 float_image = (
     modal.Image.from_registry(CUDA_BASE, add_python="3.10")
-    .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0", "build-essential")
+    .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0", "build-essential", "clang")
     .env(PIP_COMPAT_ENV)
     .run_commands(
         *PIP_COMPAT_CMDS,
@@ -100,7 +101,7 @@ MUSETALK_REPO = "https://github.com/TMElyralab/MuseTalk.git"
 
 musetalk_image = (
     modal.Image.from_registry(CUDA_BASE, add_python="3.10")
-    .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0", "build-essential")
+    .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0", "build-essential", "clang")
     .env(PIP_COMPAT_ENV)
     .run_commands(
         *PIP_COMPAT_CMDS,
