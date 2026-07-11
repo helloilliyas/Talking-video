@@ -107,7 +107,13 @@ musetalk_image = (
         *PIP_COMPAT_CMDS,
         f"git clone {MUSETALK_REPO} /opt/MuseTalk",
         "pip install -r /opt/MuseTalk/requirements.txt",
-        "pip install --no-cache-dir openmim && mim install mmengine 'mmcv==2.0.1' 'mmdet==3.1.0' 'mmpose==1.1.0'",
+        # MuseTalk's mmlab stack: pin the torch generation mmcv 2.0.1 has
+        # prebuilt wheels for, then install mmcv from OpenMMLab's wheel index
+        # (a source build compiles C++14 against C++17-only torch headers).
+        "pip install torch==2.0.1 torchvision==0.15.2 --index-url https://download.pytorch.org/whl/cu118",
+        "pip install --no-cache-dir mmengine",
+        "pip install 'mmcv==2.0.1' -f https://download.openmmlab.com/mmcv/dist/cu118/torch2.0/index.html",
+        "pip install 'mmdet==3.1.0' 'mmpose==1.1.0'",
     )
     .env({"PYTHONPATH": "/opt/MuseTalk"})
 )
