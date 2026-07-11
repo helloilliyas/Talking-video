@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Talking avatar mark: portrait silhouette with speech waves. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- head -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M46,31 a12,12 0 1,0 0.01,0 z" />
+
+    <!-- shoulders -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M28,81 C28,66.5 36,59 46,59 C56,59 64,66.5 64,81
+                          C64,82.7 62.7,84 61,84 L31,84 C29.3,84 28,82.7 28,81 Z" />
+
+    <!-- speech waves -->
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M67,37 A11.5,11.5 0 0 1 67,53" />
+    <path
+        android:strokeColor="#B3FFFFFF"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M74,31 A20,20 0 0 1 74,59" />
+</vector>
