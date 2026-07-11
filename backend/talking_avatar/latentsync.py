@@ -25,13 +25,15 @@ def _ensure_weights() -> Path:
     from huggingface_hub import snapshot_download
 
     ckpt_dir = Path(WEIGHTS_DIR) / "latentsync"
-    if not (ckpt_dir / "latentsync_unet.pt").exists():
+    marker = ckpt_dir / ".download_complete"
+    if not marker.exists():
         ckpt_dir.mkdir(parents=True, exist_ok=True)
         snapshot_download(
             LATENTSYNC_HF_REPO,
             local_dir=str(ckpt_dir),
             allow_patterns=["latentsync_unet.pt", "whisper/*", "stable_syncnet.pt"],
         )
+        marker.touch()
         weights_volume.commit()
     return ckpt_dir
 

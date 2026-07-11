@@ -18,12 +18,14 @@ def _ensure_weights() -> Path:
     from huggingface_hub import snapshot_download
 
     root = Path(WEIGHTS_DIR) / "musetalk"
-    if not (root / "musetalkV15" / "unet.pth").exists():
+    marker = root / ".download_complete"
+    if not marker.exists():
         root.mkdir(parents=True, exist_ok=True)
         snapshot_download("TMElyralab/MuseTalk", local_dir=str(root))
         # Supporting models MuseTalk expects alongside its own weights.
         snapshot_download("stabilityai/sd-vae-ft-mse", local_dir=str(root / "sd-vae"))
         snapshot_download("openai/whisper-tiny", local_dir=str(root / "whisper"))
+        marker.touch()
         weights_volume.commit()
     return root
 

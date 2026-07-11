@@ -36,7 +36,7 @@ PRELOADED_VOICES = {
 @app.cls(
     image=cosyvoice_image,
     gpu="L4",
-    timeout=600,
+    timeout=1800,  # first boot downloads several GB of weights
     scaledown_window=120,
     volumes={WEIGHTS_DIR: weights_volume, VOICES_DIR: voices_volume},
     secrets=[],
@@ -48,8 +48,17 @@ class VoiceService:
         from modelscope import snapshot_download
 
         model_dir = Path(WEIGHTS_DIR) / "cosyvoice" / COSYVOICE_MODEL_ID.split("/")[-1]
-        if not model_dir.exists():
+        # Marker file, not directory existence: an interrupted download must
+        # resume on the next boot, never be mistaken for a finished one.
+        marker = model_dir / ".download_complete"
+        if not marker.exists():
             snapshot_download(COSYVOICE_MODEL_ID, local_dir=str(model_dir))
+            blanken = model_dir / "CosyVoice-BlankEN"
+            if not any(blanken.glob("model*.safetensors")) and not (blanken / "pytorch_model.bin").exists():
+                raise RuntimeError(
+                    f"CosyVoice download incomplete: no Qwen2 weights in {blanken}"
+                )
+            marker.touch()
             weights_volume.commit()
 
         self.model = CosyVoice2(str(model_dir), load_jit=False, load_trt=False, fp16=True)
