@@ -82,7 +82,7 @@ FLOAT_REPO = "https://github.com/deepbrainai-research/float.git"
 
 float_image = (
     modal.Image.from_registry(CUDA_BASE, add_python="3.10")
-    .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
+    .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0", "build-essential")
     .env(PIP_COMPAT_ENV)
     .run_commands(
         *PIP_COMPAT_CMDS,
@@ -100,7 +100,7 @@ MUSETALK_REPO = "https://github.com/TMElyralab/MuseTalk.git"
 
 musetalk_image = (
     modal.Image.from_registry(CUDA_BASE, add_python="3.10")
-    .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
+    .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0", "build-essential")
     .env(PIP_COMPAT_ENV)
     .run_commands(
         *PIP_COMPAT_CMDS,
@@ -118,7 +118,8 @@ LATENTSYNC_REPO = "https://github.com/bytedance/LatentSync.git"
 
 latentsync_image = (
     modal.Image.from_registry(CUDA_BASE, add_python="3.10")
-    .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0")
+    # build-essential + clang: insightface compiles a C++ extension with clang++
+    .apt_install("git", "ffmpeg", "libgl1", "libglib2.0-0", "build-essential", "clang")
     .env(PIP_COMPAT_ENV)
     .run_commands(
         *PIP_COMPAT_CMDS,
