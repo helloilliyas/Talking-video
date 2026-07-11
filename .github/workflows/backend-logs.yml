@@ -17,6 +17,7 @@ jobs:
       - name: Capture recent app logs
         run: |
           timeout 90 modal app logs talking-avatar > logs.txt 2>&1 || true
-          echo "== lines: $(wc -l < logs.txt) =="
-          # Only surface error context, not full stdout (public repo).
-          grep -n -B3 -A40 -iE 'traceback|error|exception|oom|killed' logs.txt | tail -400 || echo "no error lines found"
+          echo "== app logs (${{ '' }}$(wc -l < logs.txt) lines) =="
+          cat logs.txt
+          echo "== crashed VoiceService container =="
+          timeout 60 modal container logs ta-01KX7JQ3HK2MVX931CJ8G3JMBR 2>&1 | tail -120 || true
